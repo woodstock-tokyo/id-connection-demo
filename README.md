@@ -6,7 +6,7 @@ We add a **uid** and **token** query parameter in webview url, **uid** is used t
 
 ### Token spec
 
-**token** is the [HMAC-SHA-256](https://en.wikipedia.org/wiki/HMAC) hash of **user_id** with a given **secret** (we will share the secret in a different way)
+**token** is the [HMAC-SHA-256](https://en.wikipedia.org/wiki/HMAC) hash of **user_id** with a given **secret** (we will share the secret in a separate way)
 
 ### URL Generation Example
 
@@ -72,9 +72,9 @@ func computeHmac256(message string, secret string) string {
 
 A webhook request have to add information below in HTTP **Header**:
 
-`ACCESS-KEY` Access key (Woodstock will share the key in a separate way)
-`ACCESS-NONCE` UNIX epoch time
-`ACCESS-SIGNATURE` SIGNATURE mentioned below
+- `ACCESS-KEY` Access key (Woodstock will share the key in a separate way)
+- `ACCESS-NONCE` UNIX epoch time
+- `ACCESS-SIGNATURE` SIGNATURE mentioned below
 
 ### ACCESS-SIGNATURE 生成
 
