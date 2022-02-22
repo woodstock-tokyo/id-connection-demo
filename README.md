@@ -1,6 +1,6 @@
 # Connection Demo
 
-## Woodstock 側仮申込の token の発行方法
+## 1. Woodstock 側仮申込の token の発行方法
 
 We add a **uid** and **token** query parameter in webview url, **uid** is used to pass woodstock user id while **token** is for url validation.
 
@@ -68,7 +68,7 @@ func computeHmac256(message string, secret string) string {
 }
 ```
 
-## webhook 妥当性チェック
+## 2. webhook 妥当性チェック
 
 A webhook request have to add information below in HTTP **Header**:
 
