@@ -84,6 +84,32 @@ A webhook request have to add information below in HTTP **Header**:
 - Request URL
 - Request body
 
+#### Examples
+
+##### Ruby
+
+```ruby
+require "openssl"
+
+nonce = Time.now.to_i.to_s
+url = "https://coincheck.com/api/accounts/balance"
+body = "hoge=foo"
+message = nonce + url + body
+secret = "API_SECRET"
+OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha256"), secret, message)
+# => "3919705fea4b0cd073b9c6e01e139f3b056782c57c5cffd5aea6d8c4ac98bef7"
+```
+
+```PHP
+$strUrl = "https://coincheck.com/api/accounts/balance";
+$intNonce = time();
+$arrQuery = array("hoge" => "foo");
+$strAccessSecret = "API_SECRET";
+$strMessage = $intNonce . $strUrl . http_build_query($arrQuery);
+$strSignature = hash_hmac("sha256", $strMessage, $strAccessSecret);
+# => "3bc1f33d802056c61ba8c8108f6ffb7527bcd184461a3ea0fed3cee0a22ae15d"
+```
+
 ### Woodstock Request Example in Golang
 
 ```go
@@ -184,6 +210,149 @@ func setHeaders(req *http.Request, headers map[string]string) {
 	for key, value := range headers {
 		req.Header.Add(key, value)
 	}
+}
+```
+
+### Request Example in Other Programming Languages
+
+#### Ruby
+
+```ruby
+require 'net/http'
+require 'uri'
+require 'openssl'
+
+key = "API_KEY"
+secret = "API_SECRET"
+uri = URI.parse "https://coincheck.com/api/accounts/balance"
+nonce = Time.now.to_i.to_s
+message = nonce + uri.to_s
+signature = OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha256"), secret, message)
+headers = {
+  "ACCESS-KEY" => key,
+  "ACCESS-NONCE" => nonce,
+  "ACCESS-SIGNATURE" => signature
+}
+
+https = Net::HTTP.new(uri.host, uri.port)
+https.use_ssl = true
+response = https.start {
+  https.get(uri.request_uri, headers)
+}
+
+puts response.body
+```
+
+```Java
+import com.google.api.client.http.*;
+import com.google.api.client.http.apache.ApacheHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import org.apache.commons.codec.binary.Hex;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
+
+public class CoincheckApi {
+    private String apiKey;
+    private String apiSecret;
+
+    public static void main(String[] args) {
+        String key = "API_KEY";
+        String secret = "API_SECRET";
+        CoincheckApi api = new CoincheckApi(key, secret);
+        System.out.println(api.getTicker());
+        System.out.println(api.getBalance());
+    }
+
+    public CoincheckApi(String apiKey, String apiSecret) {
+        this.apiKey = apiKey;
+        this.apiSecret = apiSecret;
+    }
+
+    public String getTicker() {
+        String url = "https://coincheck.com/api/accounts/ticker";
+        String jsonString = requestByUrlWithHeader(url, createHeader(url));
+        return jsonString;
+    }
+
+    public String getBalance() {
+        String url = "https://coincheck.com/api/accounts/balance";
+        String jsonString = requestByUrlWithHeader(url, createHeader(url));
+        return jsonString;
+    }
+
+    private Map createHeader(String url) {
+        Map map = new HashMap();
+        String nonce = createNonce();
+        map.put("ACCESS-KEY", apiKey);
+        map.put("ACCESS-NONCE", nonce);
+        map.put("ACCESS-SIGNATURE", createSignature(apiSecret, url, nonce));
+        return map;
+    }
+
+    private String createSignature(String apiSecret, String url, String nonce) {
+        String message = nonce + url;
+        return HMAC_SHA256Encode(apiSecret, message);
+    }
+
+    private String createNonce() {
+        long currentUnixTime = System.currentTimeMillis() / 1000L;
+        String nonce = String.valueOf(currentUnixTime);
+        return nonce;
+    }
+
+    private String requestByUrlWithHeader(String url, final Map headers){
+        ApacheHttpTransport transport = new ApacheHttpTransport();
+        HttpRequestFactory factory = transport.createRequestFactory(new HttpRequestInitializer() {
+            public void initialize(final HttpRequest request) throws IOException {
+                request.setConnectTimeout(0);
+                request.setReadTimeout(0);
+                request.setParser(new JacksonFactory().createJsonObjectParser());
+                final HttpHeaders httpHeaders = new HttpHeaders();
+                for (Map.Entry e : headers.entrySet()) {
+                    httpHeaders.set(e.getKey(), e.getValue());
+                }
+                request.setHeaders(httpHeaders);
+            }
+        });
+        String jsonString;
+        try {
+            HttpRequest request = factory.buildGetRequest(new GenericUrl(url));
+            HttpResponse response = request.execute();
+            jsonString = response.parseAsString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            jsonString = null;
+        }
+        return jsonString;
+    }
+
+
+    public static String HMAC_SHA256Encode(String secretKey, String message) {
+
+        SecretKeySpec keySpec = new SecretKeySpec(
+                secretKey.getBytes(),
+                "hmacSHA256");
+
+        Mac mac = null;
+        try {
+            mac = Mac.getInstance("hmacSHA256");
+            mac.init(keySpec);
+        } catch (NoSuchAlgorithmException e) {
+            // can't recover
+            throw new RuntimeException(e);
+        } catch (InvalidKeyException e) {
+            // can't recover
+            throw new RuntimeException(e);
+        }
+        byte[] rawHmac = mac.doFinal(message.getBytes());
+        return Hex.encodeHexString(rawHmac);
+    }
 }
 ```
 
