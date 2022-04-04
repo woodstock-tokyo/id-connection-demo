@@ -100,6 +100,8 @@ OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha256"), secret, message)
 # => "3919705fea4b0cd073b9c6e01e139f3b056782c57c5cffd5aea6d8c4ac98bef7"
 ```
 
+##### PHP
+
 ```PHP
 $strUrl = "https://coincheck.com/api/accounts/balance";
 $intNonce = time();
@@ -242,6 +244,8 @@ response = https.start {
 
 puts response.body
 ```
+
+#### Java
 
 ```Java
 import com.google.api.client.http.*;
