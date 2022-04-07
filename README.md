@@ -2,7 +2,7 @@
 
 ## 1. Woodstock 側仮申込の token の発行方法
 
-We add a **uid** and **token** query parameter in webview url, **uid** is used to pass woodstock user id while **token** is for url validation.
+We add a **uid** and **token** query parameter in webview url, **uid** is used to pass woodstock user id while **token** is for url validation. **uid** is a **numeric** which is > 20000 (our user id + 20000) just in case there would be duplication on Alpaca side
 
 ### Token spec
 
